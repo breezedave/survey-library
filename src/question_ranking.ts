@@ -1,4 +1,4 @@
-import SortableLib from "sortablejs";
+//import SortableLib from "sortablejs";
 import { ISurvey, ISurveyImpl } from "./base-interfaces";
 import { DragDropRankingChoices } from "./dragdrop/ranking-choices";
 import { ItemValue } from "./itemvalue";
@@ -8,7 +8,7 @@ import { QuestionCheckboxModel } from "./question_checkbox";
 import { CssClassBuilder } from "./utils/cssClassBuilder";
 import { IsMobile } from "./utils/is-mobile";
 
-const Sortable = <any>SortableLib;
+const Sortable: any = {};
 
 /**
  * A Model for a ranking question
@@ -170,13 +170,34 @@ export class QuestionRankingModel extends QuestionCheckboxModel {
     }
   }
 
+  private timerId: any = null;
+  private stopDragDropWaiting = () => {
+    console.log("2222222");
+    document.removeEventListener("pointerup", this.stopDragDropWaiting);
+    //document.removeEventListener("pointermove", this.stopDragDropWaiting);
+    clearTimeout(this.timerId);
+  };
+
   public handlePointerDown = (
     event: PointerEvent,
     choice: ItemValue,
     node: HTMLElement
   ): void => {
     if (!this.fallbackToSortableJS && !this.survey.isDesignMode) {
-      this.dragDropRankingChoices.startDrag(event, choice, this, node);
+      if (IsMobile) {
+        document.addEventListener("pointerup", this.stopDragDropWaiting, { passive: false });
+        //document.addEventListener("pointermove", this.stopDragDropWaiting, { passive: false });
+        this.timerId = setTimeout(() => {
+          console.log("sych12");
+          document.addEventListener("pointermove", () => { debugger; }, { passive: false });
+          this.dragDropRankingChoices.startDrag(event, choice, this, node);
+          this.stopDragDropWaiting();
+          // event.preventDefault();
+          // event.stopPropagation();
+        }, 500);
+      } else {
+        this.dragDropRankingChoices.startDrag(event, choice, this, node);
+      }
     }
   };
 
